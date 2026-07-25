@@ -1,30 +1,151 @@
-const WS_URL = import.meta.env.VITE_WS_URL || "wss://signalmind.onrender.com/ws/";
+Trafficcontext.jsx
+import { createContext, useState, useEffect } from "react";
 
-export function connectWebSocket(onMessageCallback) {
-  // Ensure string is clean before passing to WebSocket
-  const cleanUrl = String(WS_URL).trim();
-  const socket = new WebSocket(cleanUrl);
+import {
+  getStats,
+  getJunctions,
+  getIncidents,
+  getNegotiations,
+  saveNegotiation,
+  updateJunction,
+} from "../api/api";
 
-  socket.onopen = () => {
-    console.log("🟢 WebSocket Connected to:", cleanUrl);
-  };
+import { connectWebSocket } from "../services/websocket";
+import useSimulation from "../hooks/useSimulation";
+import { simulateTraffic } from "../services/trafficSimulation";
+import { runAI } from "../services/aiOrchestrator";
+import { detectIncident } from "../services/incidentAgent";
+import useBackendLoader from "../hooks/useBackendLoader";
+import { getTomTomTraffic } from "../api/api";
+export const TrafficContext = createContext(null);
 
-  socket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      onMessageCallback(data);
-    } catch (e) {
-      console.error("Error parsing WS message:", e);
+
+export function TrafficProvider({ children }) {
+
+  const [stats, setStats] = useState([]);
+
+const [junctions, setJunctions] = useState([]);
+
+const [negotiations, setNegotiations] = useState([]);
+
+const [decisionLogs, setDecisionLogs] = useState([]);
+
+  const [decisionHistory, setDecisionHistory] =
+    useState([]);
+
+  const [incidents, setIncidents] =
+    useState([]);
+  const [loading, setLoading] = useState(true);
+
+  //--------------------------------------------------
+  // Load PostgreSQL Data
+  //--------------------------------------------------
+
+  useBackendLoader(
+  setStats,
+  setJunctions,
+  setIncidents,
+  setNegotiations,
+  setLoading
+);
+  useSimulation({
+  loading,
+
+  junctions,
+  setJunctions,
+
+  setStats,
+
+  setNegotiations,
+
+  setDecisionLogs,
+
+  setDecisionHistory,
+
+  setIncidents,
+});
+
+  useEffect(() => {
+
+  async function testTomTom() {
+
+    const data = await getTomTomTraffic();
+
+    console.log(data);
+
+  }
+
+  testTomTom();
+
+}, []);
+
+  useEffect(() => {
+  connectWebSocket((data) => {
+
+    console.log("📡 Live Update:", data);
+
+    if (data.junctions) {
+
+  const formatted = data.junctions.map((junction) => ({
+
+    ...junction,
+
+    position: [
+      Number(junction.latitude),
+      Number(junction.longitude),
+    ],
+
+    neighbors: junction.neighbors
+      ? junction.neighbors
+          .split(",")
+          .map(Number)
+      : [],
+
+  }));
+
+  setJunctions(formatted);
+
+}
+
+    if (data.stats) {
+      setStats(data.stats);
     }
-  };
 
-  socket.onerror = (error) => {
-    console.error("🔴 WebSocket Error:", error);
-  };
+    if (data.incidents) {
+      setIncidents(data.incidents);
+    }
 
-  socket.onclose = () => {
-    console.log("🔴 WebSocket Disconnected");
-  };
+    if (data.negotiations) {
+      setNegotiations(data.negotiations);
+    }
 
-  return socket;
+  });
+}, []);
+
+
+  async function refreshBackend() {
+
+    const junctionData = await getJunctions();
+
+    setJunctions(junctionData);
+
+}
+
+  return (
+
+    <TrafficContext.Provider
+      value={{
+        stats,
+        junctions,
+        negotiations,
+        decisionLogs,
+        decisionHistory,
+        incidents,
+      }}
+    >
+      {children}
+    </TrafficContext.Provider>
+
+  );
+
 }
