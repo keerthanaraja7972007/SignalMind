@@ -5,18 +5,15 @@ import StatsCard from "../components/dashboard/StatsCard";
 import LiveMap from "../components/map/LiveMap";
 import NegotiationFeed from "../components/ai/NegotiationFeed";
 import DecisionTimeline from "../components/ai/DecisionTimeline";
-import IncidentPanel from "../components/incidents/IncidentPanel";
 import JunctionTable from "../components/dashboard/JunctionTable";
 import TrafficCharts from "../components/dashboard/TrafficCharts";
 import EmergencyVehicles from "../components/dashboard/EmergencyVehicles";
 import DecisionHistory from "../components/ai/DecisionHistory";
-import AIPerformance from "../components/ai/AIPerformance";
-import AICommander from "../components/ai/AICommander";
 
 import NegotiationsList from '../components/NegotiationsList';
 
 function Dashboard() {
-  const { stats, decisionLogs, incidents } =
+  const { stats, decisionLogs } =
     useContext(TrafficContext);
 
   return (
@@ -44,19 +41,20 @@ function Dashboard() {
 
       {/* Live Map */}
       <div id="live-map" className="mt-8 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-8">
- 
+
         <h2 className="text-2xl font-bold text-slate-100 mb-4">
           🗺 Live Traffic Map
         </h2>
- 
+
         <LiveMap />
- 
+
       </div>
-      {/* AI Commander */}
-      <div id="ai-commander" className="mt-8">
-        <AICommander />
+
+      {/* Backend Negotiations List */}
+      <div id="backend-negotiations" className="mt-8 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-8 text-slate-100">
+        <NegotiationsList />
       </div>
- 
+
       {/* AI Negotiation Feed */}
       <div id="ai-negotiation" className="mt-8 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-8">
 
@@ -75,36 +73,20 @@ function Dashboard() {
 
       {/* AI Decision Timeline */}
       <div id="ai-decision-timeline" className="mt-8 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-8">
- 
+
         <h2 className="text-2xl font-bold text-slate-100 mb-6">
           🧠 AI Decision Timeline
         </h2>
- 
+
         <DecisionTimeline logs={decisionLogs} />
- 
+
       </div>
 
       {/* AI Decision History */}
       <div id="ai-decision-history" className="mt-8">
         <DecisionHistory />
       </div>
- 
-      {/* AI Performance */}
-      <div className="mt-8">
-        <AIPerformance />
-      </div>
 
-      {/* Incident Panel */}
-      <div id="incidents" className="mt-8 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-8">
- 
-        <h2 className="text-2xl font-bold text-slate-100 mb-6">
-          🚨 Live Incident Monitor
-        </h2>
- 
-        <IncidentPanel incidents={incidents} />
- 
-      </div>
- 
       {/* Junction Table */}
       <div id="junction-registry" className="mt-8">
         <JunctionTable />
