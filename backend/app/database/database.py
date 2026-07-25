@@ -7,7 +7,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 # 2. Fallback to local database if running on your machine
 if not DATABASE_URL:
-    DATABASE_URL = "postgresql://postgres:XXXXX@localhost:5432/signalmind"
+    DATABASE_URL = "postgresql://postgres:keerthana@localhost:5432/signalmind"
 
 # 3. Handle Render's legacy URL scheme if necessary ('postgres://' -> 'postgresql://')
 if DATABASE_URL.startswith("postgres://"):
