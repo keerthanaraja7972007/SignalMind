@@ -1,10 +1,12 @@
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://signalmind.onrender.com/ws/";
 
 export function connectWebSocket(onMessageCallback) {
-  const socket = new WebSocket(WS_URL);
+  // Ensure string is clean before passing to WebSocket
+  const cleanUrl = String(WS_URL).trim();
+  const socket = new WebSocket(cleanUrl);
 
   socket.onopen = () => {
-    console.log("🟢 WebSocket Connected to:", WS_URL);
+    console.log("🟢 WebSocket Connected to:", cleanUrl);
   };
 
   socket.onmessage = (event) => {
@@ -12,7 +14,7 @@ export function connectWebSocket(onMessageCallback) {
       const data = JSON.parse(event.data);
       onMessageCallback(data);
     } catch (e) {
-      console.error("Error parsing WebSocket message:", e);
+      console.error("Error parsing WS message:", e);
     }
   };
 
