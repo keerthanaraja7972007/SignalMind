@@ -1,38 +1,28 @@
-let socket = null;
+const WS_URL = import.meta.env.VITE_WS_URL || "wss://signalmind.onrender.com/ws/";
 
-export function connectWebSocket(onMessage) {
-
-  // Create and store the WebSocket
-  socket = new WebSocket("ws://127.0.0.1:8000/ws/");
+export function connectWebSocket(onMessageCallback) {
+  const socket = new WebSocket(WS_URL);
 
   socket.onopen = () => {
-  console.log("🟢 WebSocket Connected");
-
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send("connected");
-  }
-};
+    console.log("🟢 WebSocket Connected to:", WS_URL);
+  };
 
   socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+    try {
+      const data = JSON.parse(event.data);
+      onMessageCallback(data);
+    } catch (e) {
+      console.error("Error parsing WebSocket message:", e);
+    }
+  };
 
-    onMessage(data);
+  socket.onerror = (error) => {
+    console.error("🔴 WebSocket Error:", error);
   };
 
   socket.onclose = () => {
     console.log("🔴 WebSocket Disconnected");
   };
 
-  socket.onerror = (error) => {
-    console.error("WebSocket Error:", error);
-  };
-}
-
-export function sendMessage(message) {
-  if (
-    socket &&
-    socket.readyState === WebSocket.OPEN
-  ) {
-    socket.send(message);
-  }
+  return socket;
 }
