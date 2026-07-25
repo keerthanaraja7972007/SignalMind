@@ -1,4 +1,15 @@
-const BASE_URL = "http://127.0.0.1:8000";
+// Dynamic Base URL: Environment variable -> Render Production -> Local Fallback
+const RAW_URL = import.meta.env.VITE_API_BASE_URL || "https://signalmind.onrender.com";
+
+// Cleans up any potential markdown formatting issues
+const getCleanUrl = (url) => {
+  let cleaned = String(url).trim();
+  const match = cleaned.match(/\((https?:\/\/[^\s)]+)\)/);
+  if (match) cleaned = match[1];
+  return cleaned.replace(/[\[\]]/g, "").replace(/\/$/, "");
+};
+
+const BASE_URL = getCleanUrl(RAW_URL);
 
 // -------------------------
 // GET Dashboard Stats
@@ -6,6 +17,7 @@ const BASE_URL = "http://127.0.0.1:8000";
 export async function getStats() {
   try {
     const response = await fetch(`${BASE_URL}/stats`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
     console.error("Error fetching stats:", error);
@@ -19,6 +31,7 @@ export async function getStats() {
 export async function getJunctions() {
   try {
     const response = await fetch(`${BASE_URL}/junctions`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
 
@@ -50,6 +63,7 @@ export async function getJunctions() {
 export async function getIncidents() {
   try {
     const response = await fetch(`${BASE_URL}/incidents`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
     console.error("Error fetching incidents:", error);
@@ -63,6 +77,7 @@ export async function getIncidents() {
 export async function getNegotiations() {
   try {
     const response = await fetch(`${BASE_URL}/negotiations`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
     console.error("Error fetching negotiations:", error);
@@ -77,11 +92,9 @@ export async function saveNegotiation(data) {
   try {
     await fetch(`${BASE_URL}/negotiations`, {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
       },
-
       body: JSON.stringify(data),
     });
   } catch (error) {
@@ -95,14 +108,14 @@ export async function saveNegotiation(data) {
 export async function updateJunction(junction) {
   try {
     await fetch(
-  `${BASE_URL}/junctions/${junction.id}` +
-    `?load=${junction.load}` +
-    `&averageSpeed=${junction.averageSpeed}` +
-    `&greenTime=${junction.greenTime}`,
-  {
-    method: "PUT",
-  }
-);
+      `${BASE_URL}/junctions/${junction.id}` +
+        `?load=${junction.load}` +
+        `&averageSpeed=${junction.averageSpeed}` +
+        `&greenTime=${junction.greenTime}`,
+      {
+        method: "PUT",
+      }
+    );
   } catch (error) {
     console.error("Error updating junction:", error);
   }
@@ -112,23 +125,12 @@ export async function updateJunction(junction) {
 // GET Live TomTom Traffic
 // -------------------------
 export async function getTomTomTraffic() {
-
   try {
-
-    const response = await fetch(
-      `${BASE_URL}/tomtom/all`
-    );
-
+    const response = await fetch(`${BASE_URL}/tomtom/all`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
-
-  }
-
-  catch (error) {
-
-    console.error(error);
-
+  } catch (error) {
+    console.error("Error fetching TomTom traffic:", error);
     return [];
-
   }
-
 }

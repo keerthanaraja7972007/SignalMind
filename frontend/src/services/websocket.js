@@ -1,15 +1,14 @@
-// Pure JavaScript WebSocket Service (No JSX)
-
 const RAW_WS = import.meta.env.VITE_WS_URL || "wss://signalmind.onrender.com/ws/";
 
-const cleanWsUrl = (url) => {
+const sanitizeWsUrl = (url) => {
   let cleaned = String(url).trim();
+  // Extract clean URL if wrapped in markdown parentheses
   const match = cleaned.match(/\((wss?:\/\/[^\s)]+)\)/);
   if (match) cleaned = match[1];
   return cleaned.replace(/[\[\]]/g, "");
 };
 
-const WS_URL = cleanWsUrl(RAW_WS);
+const WS_URL = sanitizeWsUrl(RAW_WS);
 
 export function connectWebSocket(onMessageCallback) {
   console.log("Connecting WebSocket to:", WS_URL);
