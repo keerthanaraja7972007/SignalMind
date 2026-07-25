@@ -1,151 +1,41 @@
-Trafficcontext.jsx
-import { createContext, useState, useEffect } from "react";
+// Pure JavaScript WebSocket Service (No JSX)
 
-import {
-  getStats,
-  getJunctions,
-  getIncidents,
-  getNegotiations,
-  saveNegotiation,
-  updateJunction,
-} from "../api/api";
+const RAW_WS = import.meta.env.VITE_WS_URL || "wss://signalmind.onrender.com/ws/";
 
-import { connectWebSocket } from "../services/websocket";
-import useSimulation from "../hooks/useSimulation";
-import { simulateTraffic } from "../services/trafficSimulation";
-import { runAI } from "../services/aiOrchestrator";
-import { detectIncident } from "../services/incidentAgent";
-import useBackendLoader from "../hooks/useBackendLoader";
-import { getTomTomTraffic } from "../api/api";
-export const TrafficContext = createContext(null);
+const cleanWsUrl = (url) => {
+  let cleaned = String(url).trim();
+  const match = cleaned.match(/\((wss?:\/\/[^\s)]+)\)/);
+  if (match) cleaned = match[1];
+  return cleaned.replace(/[\[\]]/g, "");
+};
 
+const WS_URL = cleanWsUrl(RAW_WS);
 
-export function TrafficProvider({ children }) {
+export function connectWebSocket(onMessageCallback) {
+  console.log("Connecting WebSocket to:", WS_URL);
+  
+  const socket = new WebSocket(WS_URL);
 
-  const [stats, setStats] = useState([]);
+  socket.onopen = () => {
+    console.log("🟢 WebSocket Connected!");
+  };
 
-const [junctions, setJunctions] = useState([]);
-
-const [negotiations, setNegotiations] = useState([]);
-
-const [decisionLogs, setDecisionLogs] = useState([]);
-
-  const [decisionHistory, setDecisionHistory] =
-    useState([]);
-
-  const [incidents, setIncidents] =
-    useState([]);
-  const [loading, setLoading] = useState(true);
-
-  //--------------------------------------------------
-  // Load PostgreSQL Data
-  //--------------------------------------------------
-
-  useBackendLoader(
-  setStats,
-  setJunctions,
-  setIncidents,
-  setNegotiations,
-  setLoading
-);
-  useSimulation({
-  loading,
-
-  junctions,
-  setJunctions,
-
-  setStats,
-
-  setNegotiations,
-
-  setDecisionLogs,
-
-  setDecisionHistory,
-
-  setIncidents,
-});
-
-  useEffect(() => {
-
-  async function testTomTom() {
-
-    const data = await getTomTomTraffic();
-
-    console.log(data);
-
-  }
-
-  testTomTom();
-
-}, []);
-
-  useEffect(() => {
-  connectWebSocket((data) => {
-
-    console.log("📡 Live Update:", data);
-
-    if (data.junctions) {
-
-  const formatted = data.junctions.map((junction) => ({
-
-    ...junction,
-
-    position: [
-      Number(junction.latitude),
-      Number(junction.longitude),
-    ],
-
-    neighbors: junction.neighbors
-      ? junction.neighbors
-          .split(",")
-          .map(Number)
-      : [],
-
-  }));
-
-  setJunctions(formatted);
-
-}
-
-    if (data.stats) {
-      setStats(data.stats);
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessageCallback(data);
+    } catch (e) {
+      console.error("Error parsing WS message:", e);
     }
+  };
 
-    if (data.incidents) {
-      setIncidents(data.incidents);
-    }
+  socket.onerror = (error) => {
+    console.error("🔴 WebSocket Error:", error);
+  };
 
-    if (data.negotiations) {
-      setNegotiations(data.negotiations);
-    }
+  socket.onclose = () => {
+    console.log("🔴 WebSocket Disconnected");
+  };
 
-  });
-}, []);
-
-
-  async function refreshBackend() {
-
-    const junctionData = await getJunctions();
-
-    setJunctions(junctionData);
-
-}
-
-  return (
-
-    <TrafficContext.Provider
-      value={{
-        stats,
-        junctions,
-        negotiations,
-        decisionLogs,
-        decisionHistory,
-        incidents,
-      }}
-    >
-      {children}
-    </TrafficContext.Provider>
-
-  );
-
+  return socket;
 }
