@@ -13,6 +13,8 @@ import DecisionHistory from "../components/ai/DecisionHistory";
 import AIPerformance from "../components/ai/AIPerformance";
 import AICommander from "../components/ai/AICommander";
 
+import NegotiationsList from '../components/NegotiationsList';
+
 function Dashboard() {
   const { stats, decisionLogs, incidents } =
     useContext(TrafficContext);
